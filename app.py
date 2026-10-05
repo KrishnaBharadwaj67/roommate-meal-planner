@@ -1,13 +1,14 @@
 """
-Meal Buddy — A local AI meal-planning assistant for Uma Shreyas.
+Meal Buddy — A local AI meal-planning assistant for my roommate.
 Built for DEV Hacktoberfest "Build for a Friend" challenge.
 
 Uses Gemma via Ollama (fully offline, open-source AI at the core).
-⚠️  This is a helper tool, NOT medical or nutritional advice.
+This is a helper tool, NOT medical or nutritional advice.
 """
 
 import json
 import re
+import shutil
 import textwrap
 from pathlib import Path
 
@@ -23,9 +24,15 @@ MODEL_NAME = "gemma3"
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
 PROFILE_PATH = Path(__file__).parent / "profile.json"
+EXAMPLE_PROFILE_PATH = Path(__file__).parent / "profile.example.json"
 MAX_RETRIES = 3          # retries for malformed JSON from the model
 OLLAMA_TIMEOUT = 120.0   # seconds — small models can be slow on CPU
 # ─────────────────────────────────────────────────────────────────────────────
+
+# On first run, copy the example profile so the app works out of the box.
+# The real profile.json is gitignored — edit it freely with your actual data.
+if not PROFILE_PATH.exists() and EXAMPLE_PROFILE_PATH.exists():
+    shutil.copy(EXAMPLE_PROFILE_PATH, PROFILE_PATH)
 
 app = FastAPI(title="Meal Buddy")
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
