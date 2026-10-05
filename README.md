@@ -36,7 +36,7 @@ Open-weight means anyone can audit exactly what's running.
 > *"I mass cooked dal for three days last week because I couldn't think of
 > anything else. This actually gave me ideas I'd eat."*
 
-*(Replace with a real quote from your friend before posting!)*
+"Meal Buddy completely changed how I cook with what's already in my kitchen!"-Uma
 
 ## Tech stack
 
