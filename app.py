@@ -20,7 +20,7 @@ from fastapi.templating import Jinja2Templates
 # ─── CONFIG ──────────────────────────────────────────────────────────────────
 # Change this to any Ollama model you've pulled, e.g. "gemma3:4b", "mistral",
 # "llama3.2". Just run:  ollama pull <model-name>  then update here.
-MODEL_NAME = "gemma3"
+MODEL_NAME = "gemma3:4b"
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
 PROFILE_PATH = Path(__file__).parent / "profile.json"
@@ -57,6 +57,7 @@ def call_ollama(prompt: str) -> str:
         "stream": False,
         "options": {
             "temperature": 0.7,
+            "num_predict": 4096,   # enough tokens for a full 3-day plan
         },
     }
     resp = httpx.post(OLLAMA_URL, json=payload, timeout=OLLAMA_TIMEOUT)
@@ -127,6 +128,22 @@ def build_meal_plan_prompt(profile: dict, pantry: str) -> str:
       "meal_plan": [
         {{
           "day": 1,
+          "meals": {{
+            "breakfast": {{"name": "...", "ingredients": ["..."], "time_mins": 15, "steps": "..."}},
+            "lunch":     {{"name": "...", "ingredients": ["..."], "time_mins": 25, "steps": "..."}},
+            "dinner":    {{"name": "...", "ingredients": ["..."], "time_mins": 30, "steps": "..."}}
+          }}
+        }},
+        {{
+          "day": 2,
+          "meals": {{
+            "breakfast": {{"name": "...", "ingredients": ["..."], "time_mins": 15, "steps": "..."}},
+            "lunch":     {{"name": "...", "ingredients": ["..."], "time_mins": 25, "steps": "..."}},
+            "dinner":    {{"name": "...", "ingredients": ["..."], "time_mins": 30, "steps": "..."}}
+          }}
+        }},
+        {{
+          "day": 3,
           "meals": {{
             "breakfast": {{"name": "...", "ingredients": ["..."], "time_mins": 15, "steps": "..."}},
             "lunch":     {{"name": "...", "ingredients": ["..."], "time_mins": 25, "steps": "..."}},
