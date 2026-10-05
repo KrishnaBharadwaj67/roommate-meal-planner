@@ -1,0 +1,15 @@
+{
+  "name": "Uma Shreyas",
+  "allergies": ["peanuts", "lactose"],
+  "diet": "vegetarian",
+  "dislikes": ["mushrooms"],
+  "likes": ["spicy food", "South Indian", "Hyderabadi"],
+  "cuisines": ["South Indian", "Hyderabadi"],
+  "budget_per_week_inr": 1500,
+  "kitchen": {
+    "burners": 2,
+    "has_oven": false,
+    "max_cooking_time_weekday_mins": 30
+  },
+  "pain_point": "Never knows what to cook, wastes groceries"
+}

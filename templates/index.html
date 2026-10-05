@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🍛 Meal Buddy — for {{ profile.name }}</title>
+  <style>
+    /* ── Reset & base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #faf7f2;
+      color: #2d2a26;
+      line-height: 1.6;
+      padding: 1rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    /* ── Header ── */
+    header {
+      text-align: center;
+      padding: 1.5rem 0 1rem;
+      border-bottom: 2px solid #e8dfd3;
+      margin-bottom: 1.5rem;
+    }
+    header h1 { font-size: 2rem; color: #b85c38; }
+    header p { color: #7a6f64; font-size: 0.95rem; }
+
+    /* ── Profile card ── */
+    .profile-card {
+      background: #fff;
+      border: 1px solid #e8dfd3;
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.5rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.4rem 1.5rem;
+      font-size: 0.9rem;
+    }
+    .profile-card b { color: #b85c38; }
+    .profile-card .full-width { grid-column: 1 / -1; }
+
+    /* ── Pantry input ── */
+    .pantry-section {
+      background: #fff;
+      border: 1px solid #e8dfd3;
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+    .pantry-section h2 { font-size: 1.1rem; color: #b85c38; margin-bottom: 0.5rem; }
+    textarea {
+      width: 100%;
+      min-height: 80px;
+      border: 1px solid #d4c9ba;
+      border-radius: 8px;
+      padding: 0.75rem;
+      font-family: inherit;
+      font-size: 0.95rem;
+      resize: vertical;
+    }
+    textarea:focus { outline: 2px solid #b85c38; border-color: transparent; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-primary { background: #b85c38; color: #fff; }
+    .btn-primary:hover { background: #a04e2e; }
+    .btn-primary:disabled { background: #ccc; cursor: not-allowed; }
+    .btn-swap {
+      background: #e8dfd3;
+      color: #5a4f42;
+      font-size: 0.8rem;
+      padding: 0.35rem 0.75rem;
+    }
+    .btn-swap:hover { background: #d4c9ba; }
+
+    /* ── Loader ── */
+    .loader-wrap {
+      display: none;
+      text-align: center;
+      padding: 2rem;
+    }
+    .loader-wrap.active { display: block; }
+    .spinner {
+      width: 40px; height: 40px;
+      border: 4px solid #e8dfd3;
+      border-top-color: #b85c38;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 0.75rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Allergy badge ── */
+    .allergy-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.4rem 1rem;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+    .allergy-badge.safe { background: #d4edda; color: #155724; }
+    .allergy-badge.unsafe { background: #f8d7da; color: #721c24; }
+
+    /* ── Meal plan ── */
+    #results { display: none; }
+    #results.show { display: block; }
+    .day-card {
+      background: #fff;
+      border: 1px solid #e8dfd3;
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .day-card h3 { color: #b85c38; margin-bottom: 0.75rem; font-size: 1.1rem; }
+    .meal {
+      border-left: 3px solid #e8dfd3;
+      padding: 0.5rem 0 0.5rem 1rem;
+      margin-bottom: 0.75rem;
+    }
+    .meal:last-child { margin-bottom: 0; }
+    .meal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .meal h4 {
+      font-size: 0.95rem;
+      color: #5a4f42;
+      text-transform: capitalize;
+    }
+    .meal h4 span { color: #2d2a26; font-weight: 700; }
+    .meal-meta { font-size: 0.82rem; color: #7a6f64; margin-top: 0.2rem; }
+    .meal-steps { font-size: 0.88rem; color: #5a4f42; margin-top: 0.25rem; }
+
+    /* ── Grocery list ── */
+    .grocery-section {
+      background: #fff;
+      border: 1px solid #e8dfd3;
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+    .grocery-section h3 { color: #b85c38; margin-bottom: 0.75rem; }
+    .grocery-category { margin-bottom: 0.5rem; }
+    .grocery-category h4 { font-size: 0.9rem; color: #5a4f42; }
+    .grocery-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.88rem;
+      padding: 0.15rem 0 0.15rem 1rem;
+    }
+    .grocery-total {
+      font-weight: 700;
+      margin-top: 0.5rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid #e8dfd3;
+      text-align: right;
+    }
+
+    /* ── Error ── */
+    .error-box {
+      background: #f8d7da;
+      color: #721c24;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      margin-bottom: 1rem;
+      display: none;
+    }
+    .error-box.show { display: block; }
+
+    /* ── Disclaimer ── */
+    .disclaimer {
+      text-align: center;
+      font-size: 0.78rem;
+      color: #999;
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 1px solid #e8dfd3;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Header ── -->
+  <header>
+    <h1>🍛 Meal Buddy</h1>
+    <p>Personalised meal planning for <strong>{{ profile.name }}</strong> — powered by local AI</p>
+  </header>
+
+  <!-- ── Profile card ── -->
+  <div class="profile-card">
+    <div><b>Diet:</b> {{ profile.diet }}</div>
+    <div><b>Budget:</b> ₹{{ profile.budget_per_week_inr }}/week</div>
+    <div><b>Allergies:</b> <span style="color:#c0392b;font-weight:600">{{ profile.allergies | join(', ') }}</span></div>
+    <div><b>Kitchen:</b> {{ profile.kitchen.burners }} burner(s), {{ 'oven' if profile.kitchen.has_oven else 'no oven' }}</div>
+    <div><b>Loves:</b> {{ profile.likes | join(', ') }}</div>
+    <div><b>Max cook time:</b> {{ profile.kitchen.max_cooking_time_weekday_mins }} min</div>
+    <div class="full-width"><b>Dislikes:</b> {{ profile.dislikes | join(', ') }}</div>
+  </div>
+
+  <!-- ── Pantry input ── -->
+  <div class="pantry-section">
+    <h2>🧅 What's in your kitchen right now?</h2>
+    <textarea id="pantry" placeholder="e.g. rice, dal, onions, tomatoes, cumin, turmeric, green chillies, coconut, potatoes..."></textarea>
+    <div style="margin-top:0.75rem;">
+      <button class="btn btn-primary" id="generateBtn" onclick="generatePlan()">
+        🪄 Generate 3-Day Meal Plan
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Loader ── -->
+  <div class="loader-wrap" id="loader">
+    <div class="spinner"></div>
+    <p>Gemma is cooking up a plan… <br><small>(this can take 30–90 s on CPU)</small></p>
+  </div>
+
+  <!-- ── Error ── -->
+  <div class="error-box" id="errorBox"></div>
+
+  <!-- ── Results ── -->
+  <div id="results">
+    <!-- Allergy badge -->
+    <div id="allergyBadge"></div>
+
+    <!-- Meal plan -->
+    <div id="mealPlanContainer"></div>
+
+    <!-- Grocery list -->
+    <div id="groceryContainer"></div>
+  </div>
+
+  <!-- ── Disclaimer ── -->
+  <div class="disclaimer">
+    ⚠️ <strong>Disclaimer:</strong> Meal Buddy is a helper tool, <em>not</em> medical or nutritional advice.<br>
+    Always double-check ingredients if you have severe allergies.<br>
+    Built with ❤️ for {{ profile.name }} · Hacktoberfest 2026
+  </div>
+
+  <script>
+    // Current state
+    let currentPlan = null;
+    const pantryEl = document.getElementById('pantry');
+
+    // ── Helpers ──
+    function showLoader(show) {
+      document.getElementById('loader').classList.toggle('active', show);
+      document.getElementById('generateBtn').disabled = show;
+    }
+    function showError(msg) {
+      const box = document.getElementById('errorBox');
+      box.textContent = msg;
+      box.classList.toggle('show', !!msg);
+    }
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ── Generate meal plan ──
+    async function generatePlan() {
+      const pantry = pantryEl.value.trim();
+      if (!pantry) { alert('Please enter your pantry ingredients first!'); return; }
+
+      showLoader(true);
+      showError('');
+      document.getElementById('results').classList.remove('show');
+
+      try {
+        const resp = await fetch('/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pantry }),
+        });
+        const data = await resp.json();
+
+        if (data.error) {
+          showError(data.message);
+          showLoader(false);
+          return;
+        }
+
+        currentPlan = data.meal_plan;
+        renderAllergyBadge(data.allergy_check);
+        renderMealPlan(data.meal_plan);
+        renderGroceryList(data.meal_plan);
+        document.getElementById('results').classList.add('show');
+      } catch (e) {
+        showError('Failed to connect. Is Ollama running? (' + e.message + ')');
+      }
+      showLoader(false);
+    }
+
+    // ── Render allergy badge ──
+    function renderAllergyBadge(check) {
+      const el = document.getElementById('allergyBadge');
+      if (check.passed) {
+        el.innerHTML = '<div class="allergy-badge safe">✅ Allergy check passed — no flagged ingredients</div>';
+      } else {
+        el.innerHTML = '<div class="allergy-badge unsafe">⚠️ Allergy warning: ' +
+          escapeHtml(check.flags.join('; ')) + '</div>';
+      }
+    }
+
+    // ── Render meal plan ──
+    function renderMealPlan(plan) {
+      const container = document.getElementById('mealPlanContainer');
+      let html = '';
+      for (const day of (plan.meal_plan || [])) {
+        html += `<div class="day-card"><h3>📅 Day ${day.day}</h3>`;
+        for (const mt of ['breakfast', 'lunch', 'dinner']) {
+          const meal = day.meals?.[mt];
+          if (!meal) continue;
+          const emoji = mt === 'breakfast' ? '🌅' : mt === 'lunch' ? '☀️' : '🌙';
+          html += `
+            <div class="meal" id="meal-${day.day}-${mt}">
+              <div class="meal-header">
+                <h4>${emoji} ${mt}: <span>${escapeHtml(meal.name || '—')}</span></h4>
+                <button class="btn btn-swap" onclick="swapMeal(${day.day}, '${mt}')">🔄 Swap</button>
+              </div>
+              <div class="meal-meta">
+                🕐 ${meal.time_mins || '?'} min · 🧾 ${(meal.ingredients || []).map(escapeHtml).join(', ')}
+              </div>
+              <div class="meal-steps">${escapeHtml(meal.steps || '')}</div>
+            </div>`;
+        }
+        html += '</div>';
+      }
+      container.innerHTML = html;
+    }
+
+    // ── Render grocery list ──
+    function renderGroceryList(plan) {
+      const container = document.getElementById('groceryContainer');
+      const list = plan.grocery_list || [];
+      if (!list.length) {
+        container.innerHTML = '<div class="grocery-section"><h3>🛒 Grocery List</h3><p>Everything is in your pantry! 🎉</p></div>';
+        return;
+      }
+
+      // Group by category
+      const groups = {};
+      for (const item of list) {
+        const cat = item.category || 'Other';
+        if (!groups[cat]) groups[cat] = [];
+        groups[cat].push(item);
+      }
+
+      let html = '<div class="grocery-section"><h3>🛒 Grocery List (items you need to buy)</h3>';
+      for (const [cat, items] of Object.entries(groups)) {
+        html += `<div class="grocery-category"><h4>📦 ${escapeHtml(cat)}</h4>`;
+        for (const item of items) {
+          html += `<div class="grocery-item">
+            <span>${escapeHtml(item.item)}</span>
+            <span>~₹${item.estimated_cost_inr ?? '?'}</span>
+          </div>`;
+        }
+        html += '</div>';
+      }
+      html += `<div class="grocery-total">Estimated total: ₹${plan.total_estimated_cost_inr ?? '?'}</div>`;
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    // ── Swap a single meal ──
+    async function swapMeal(day, mealType) {
+      if (!currentPlan) return;
+      const mealDiv = document.getElementById(`meal-${day}-${mealType}`);
+      const origHtml = mealDiv.innerHTML;
+      mealDiv.innerHTML = '<p style="color:#b85c38;font-style:italic;">🔄 Swapping… (30–60 s)</p>';
+
+      try {
+        const resp = await fetch('/swap', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            day,
+            meal_type: mealType,
+            pantry: pantryEl.value.trim(),
+            current_plan: currentPlan,
+          }),
+        });
+        const data = await resp.json();
+
+        if (data.error) {
+          showError(data.message);
+          mealDiv.innerHTML = origHtml;
+          return;
+        }
+
+        // Update current plan in memory
+        for (const d of currentPlan.meal_plan) {
+          if (d.day === day) {
+            d.meals[mealType] = data.new_meal;
+          }
+        }
+
+        // Re-render just this meal
+        const meal = data.new_meal;
+        const emoji = mealType === 'breakfast' ? '🌅' : mealType === 'lunch' ? '☀️' : '🌙';
+        mealDiv.innerHTML = `
+          <div class="meal-header">
+            <h4>${emoji} ${mealType}: <span>${escapeHtml(meal.name || '—')}</span></h4>
+            <button class="btn btn-swap" onclick="swapMeal(${day}, '${mealType}')">🔄 Swap</button>
+          </div>
+          <div class="meal-meta">
+            🕐 ${meal.time_mins || '?'} min · 🧾 ${(meal.ingredients || []).map(escapeHtml).join(', ')}
+          </div>
+          <div class="meal-steps">${escapeHtml(meal.steps || '')}</div>
+        `;
+
+        // Update allergy badge
+        renderAllergyBadge(data.allergy_check);
+      } catch (e) {
+        showError('Swap failed: ' + e.message);
+        mealDiv.innerHTML = origHtml;
+      }
+    }
+  </script>
+</body>
+</html>
